@@ -101,7 +101,6 @@ typedef enum {hod_none, hamana04, berwein02, berwein02_hexcl, leauthaud11, coupo
  * Global variables and functions                                   *
  * ---------------------------------------------------------------- */
 
-double FFTLog_TMP;
 
 typedef struct FFTLog_complex
 {
