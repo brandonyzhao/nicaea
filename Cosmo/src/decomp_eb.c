@@ -557,8 +557,8 @@ double chi2_RB_null(const double *RB, const double *covRB, int NRB)
 
 /* ============================================================ *
  * Reads COSEBIs zeros and normalisation coefficients from file *
- * and returns polynomial coefficients.	File name is automatic, *
- * scale checks are done.					*
+ * and returns polynomial coefficients. File name is automatic, *
+ * scale checks are done.					                         *
  * ============================================================ */
 double *read_zeros_norm_cosebi_auto_check(double Psimin, double Psimax, const char *path, error **err)
 {
@@ -588,7 +588,7 @@ double *read_zeros_norm_cosebi_auto_check(double Psimin, double Psimax, const ch
 double *read_zeros_norm_cosebi(const char *rname, double *psimin, double *psimax, error **err)
 {
    FILE *F;
-   int Nzeros, Ncoeff, k, n, off_c, off_R, nmax;
+   int Nzeros, Ncoeff, k, n, off_c, off_R, nmax, res;
    ssize_t nread;
    double *Rn, *Norm, *c;
    char *str, *line=NULL;
@@ -599,11 +599,15 @@ double *read_zeros_norm_cosebi(const char *rname, double *psimin, double *psimax
    /* Read two header lines */
    line = malloc_err(1024*sizeof(char), err);       forwardError(*err, __LINE__, NULL);
    str = fgets(line, 1024, F);
+   testErrorRet(str == NULL, mr_file, "File has wrong format, reading header failed",
+					 *err, __LINE__, NULL);
    str = fgets(line, 1024, F);
+   testErrorRet(str == NULL, mr_file, "File has wrong format, reading header failed",
+					 *err, __LINE__, NULL);
    free(line);
 
    nread = fscanf(F, "%d  %lg %lg\n", &nmax, psimin, psimax);
-   testErrorRet(nread != 3, mr_file, "File has wrong format.", *err, __LINE__, NULL);
+   testErrorRet(nread != 3, mr_file, "File has wrong format", *err, __LINE__, NULL);
 
    testErrorRetVA(nmax > NMAX_COSEBI, mr_range,
          "COSEBI number of modes n=%d read from file %s cannot be larger than NMAX_COSEBI=%d",
@@ -614,19 +618,19 @@ double *read_zeros_norm_cosebi(const char *rname, double *psimin, double *psimax
     * sum_{i=1}^{nmax+1} (i+1) = sum_{i=0}^{nmax+1} i - 1 */
    Nzeros = (nmax+1) * (nmax+2) / 2 - 1;
 
-   //fprintf(stderr, "nmax = %d , Psi = [%g, %g]\n", nmax, *psimin, *psimax);
-   //fprintf(stderr, "Reading %d Rn, %d Norm, from %s\n", Nzeros, nmax, rname);
-
    Rn   = malloc_err(sizeof(double)*Nzeros, err);   forwardError(*err, __LINE__, NULL);
    Norm = malloc_err(sizeof(double)*nmax, err);     forwardError(*err, __LINE__, NULL);
 
    /* Read zeros */
    for (k=0; k<Nzeros; k++) {
-      fscanf(F, "%lg ", Rn+k);
+      res = fscanf(F, "%lg ", Rn+k);
+		testErrorRet(res != 1, mr_file, "File has wrong format, reading zeros failed", *err, __LINE__, NULL);
    }
    /* Read normalisations */
    for (k=0; k<nmax; k++) {
-      fscanf(F, "%lg ", Norm+k);
+      res = fscanf(F, "%lg ", Norm+k);
+		testErrorRet(res != 1, mr_file, "File has wrong format, reading normalisation failed",
+						 *err, __LINE__, NULL);
    }
 
    fclose(F);
@@ -661,8 +665,8 @@ double *read_zeros_norm_cosebi(const char *rname, double *psimin, double *psimax
 /* ============================================================ *
  * COSEBI logarithmis filter function, SEK10 (28). The          *
  * coefficients have to be precalculated from the zeros, output *
- * by Mathematica.						*
- * Not normalised. 						*
+ * by Mathematica.						                            *
+ * Not normalised. 						                            *
  * ============================================================ */
 double Tplog_c(double z, const double *c, int n, error **err)
 {
@@ -696,7 +700,7 @@ double Tmlog(double z, const double *c, int n, error **err)
    cn    = c + off_c;
 
    for (m=0,res=0.0,zpowerm=1; m<=n; m++) { // n+1 MKDEBUG ??
-      res += dnm(n, m ,cn) * zpowerm;
+      res += dnm(n, m, cn) * zpowerm;
       zpowerm *= z;
    }
 
@@ -779,7 +783,6 @@ double sum_combinations(int j, int n, const double *r, error **err)
          //printf(" %zu", c_i);
       }
       sum += prod;
-      //printf("{"); gsl_combination_fprintf(stdout, c, " %u"); printf (" }\n");
    } while (gsl_combination_next(c) == GSL_SUCCESS);
 
    gsl_combination_free(c);
