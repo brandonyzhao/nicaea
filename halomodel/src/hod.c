@@ -2258,6 +2258,7 @@ void FFTLog(FFTLog_config *fc, const gsl_function *ar_in, double *k, double *ak_
    fftw_execute(fc->p_backward);
    
    /* reverse array... */
+   
   #define FFTLog_SWAP(a,b) {double FFTLog_TMP = (a); (a) = (b); (b) = FFTLog_TMP;}
   for(i=0;i<fc->N/2;i++) FFTLog_SWAP(fc->ak[i][0],fc->ak[fc->N-i-1][0]);
   
